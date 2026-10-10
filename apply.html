@@ -132,6 +132,51 @@
 
     .notice-box p strong { font-weight: 600; }
 
+    .progress-steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: -12px 0 24px;
+    }
+
+    .progress-step {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 500;
+    }
+
+    .progress-step::before {
+      content: attr(data-step);
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: #e9e5dd;
+      color: var(--navy);
+      font-size: 0.7rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .progress-step.active { color: var(--navy); }
+    .progress-step.active::before { background: var(--navy); color: var(--gold-light); }
+
+    .draft-notice, .error-summary {
+      display: none;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      font-size: 0.82rem;
+      line-height: 1.6;
+    }
+
+    .draft-notice.show { display: block; background: #eef5ff; border: 1px solid #c9ddf7; color: #23466f; }
+    .error-summary.show { display: block; background: #fff2f2; border: 1px solid #efc3c3; color: #9b2929; }
+
     /* ── Form card ── */
     .form-card {
       background: #fff;
@@ -229,6 +274,13 @@
       margin-top: 2px;
     }
 
+    .reason-help {
+      min-height: 1.2em;
+      font-size: 0.75rem;
+      color: #7c5c00;
+      line-height: 1.5;
+    }
+
 
     /* Cost notice */
     .cost-box {
@@ -244,6 +296,7 @@
     .cost-icon { font-size: 1.6rem; flex-shrink: 0; }
     .cost-title { font-size: 0.78rem; color: var(--muted); margin-bottom: 2px; }
     .cost-amount { font-family: 'Noto Serif KR', serif; font-size: 1.4rem; font-weight: 700; color: var(--navy); }
+    .cost-note { font-size: 0.75rem; color: var(--muted); margin-top: 3px; }
 
     /* Agreement */
     .agree-box {
@@ -420,6 +473,46 @@
       width: 100%;
     }
 
+    .review-modal { max-width: 520px; text-align: left; padding: 36px; }
+    .review-modal h3 { text-align: center; }
+    .review-intro { text-align: center; margin-bottom: 18px; }
+    .review-list { border-top: 1px solid #eee8dc; }
+    .review-row {
+      display: grid;
+      grid-template-columns: 110px 1fr;
+      gap: 16px;
+      padding: 11px 4px;
+      border-bottom: 1px solid #eee8dc;
+      font-size: 0.85rem;
+    }
+    .review-row dt { color: var(--muted); }
+    .review-row dd { color: var(--navy); font-weight: 500; overflow-wrap: anywhere; }
+    .modal-actions { display: grid; grid-template-columns: 1fr 1.5fr; gap: 10px; margin-top: 24px; }
+    .modal-actions button, .copy-btn {
+      border-radius: 9px;
+      padding: 12px 16px;
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .btn-secondary, .copy-btn { background: #fff; color: var(--navy); border: 1px solid #d9d3c7; }
+    .btn-primary { background: var(--navy); color: #fff; border: 1px solid var(--navy); }
+    .copy-btn { display: block; margin: 0 auto 4px; padding: 8px 14px; font-size: 0.78rem; }
+    .copy-status { min-height: 1.4em; text-align: center; color: #31734b; font-size: 0.75rem; }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
     .err-msg { font-size: 0.75rem; color: var(--error); margin-top: 4px; }
 
     @media (max-width: 600px) {
@@ -428,6 +521,10 @@
       .form-grid { grid-template-columns: 1fr; }
       .header-inner { padding: 24px 16px 20px; }
       .header-text h2 { font-size: 1.2rem; }
+      .progress-steps { gap: 6px; }
+      .progress-step { align-items: flex-start; font-size: 0.7rem; }
+      .review-modal { padding: 28px 20px; }
+      .review-row { grid-template-columns: 88px 1fr; gap: 10px; }
     }
   </style>
 </head>
@@ -452,6 +549,14 @@
     </p>
   </div>
 
+  <div class="progress-steps" aria-label="신청 단계">
+    <div class="progress-step active" data-step="1">기본 정보</div>
+    <div class="progress-step active" data-step="2">비용 및 동의</div>
+    <div class="progress-step" data-step="3">내용 확인</div>
+  </div>
+  <div class="draft-notice" id="draftNotice" role="status">이전에 작성하던 내용을 불러왔습니다. 개인정보 동의 항목은 다시 확인해 주세요.</div>
+  <div class="error-summary" id="errorSummary" role="alert" tabindex="-1">입력 내용을 확인해 주세요. 첫 번째 오류 항목으로 이동합니다.</div>
+
   <form id="applyForm" novalidate>
     <div class="form-card">
 
@@ -464,27 +569,28 @@
         <div class="form-grid">
           <div class="form-group">
             <label for="name">이름 <span class="req">*</span></label>
-            <input type="text" id="name" name="name" placeholder="홍길동" autocomplete="name" />
-            <span class="err-msg" id="name-err"></span>
+            <input type="text" id="name" name="name" placeholder="홍길동" autocomplete="name" required aria-describedby="name-err" />
+            <span class="err-msg" id="name-err" role="alert"></span>
           </div>
           <div class="form-group">
             <label for="studentId">학번 <span class="req">*</span></label>
-            <input type="text" id="studentId" name="studentId" placeholder="예: 24001" />
-            <span class="err-msg" id="studentId-err"></span>
+            <input type="text" id="studentId" name="studentId" placeholder="예: 26001" inputmode="numeric" maxlength="5" pattern="[0-9]{5}" required aria-describedby="studentId-hint studentId-err" />
+            <span class="hint" id="studentId-hint">숫자 5자리로 입력하세요</span>
+            <span class="err-msg" id="studentId-err" role="alert"></span>
           </div>
           <div class="form-group">
             <label for="grade">학년 <span class="req">*</span></label>
-            <select id="grade" name="grade">
+            <select id="grade" name="grade" required aria-describedby="grade-err">
               <option value="">선택</option>
               <option value="1">1학년</option>
               <option value="2">2학년</option>
               <option value="3">3학년</option>
             </select>
-            <span class="err-msg" id="grade-err"></span>
+            <span class="err-msg" id="grade-err" role="alert"></span>
           </div>
           <div class="form-group">
             <label for="classNum">반 <span class="req">*</span></label>
-            <select id="classNum" name="classNum">
+            <select id="classNum" name="classNum" required aria-describedby="classNum-err">
               <option value="">선택</option>
               <option value="1">1반</option>
               <option value="2">2반</option>
@@ -497,31 +603,37 @@
               <option value="9">9반</option>
               <option value="10">10반</option>
             </select>
-            <span class="err-msg" id="classNum-err"></span>
+            <span class="err-msg" id="classNum-err" role="alert"></span>
           </div>
           <div class="form-group">
             <label for="email">이메일 주소 <span class="req">*</span></label>
-            <input type="email" id="email" name="email" placeholder="example@minjok.hs.kr" autocomplete="email" />
-            <span class="hint">제작 완료 알림을 받을 이메일을 입력하세요</span>
-            <span class="err-msg" id="email-err"></span>
+            <input type="email" id="email" name="email" placeholder="example@minjok.hs.kr" autocomplete="email" required aria-describedby="email-hint email-err" />
+            <span class="hint" id="email-hint">제작 완료 알림을 받을 이메일을 입력하세요</span>
+            <span class="err-msg" id="email-err" role="alert"></span>
           </div>
           <div class="form-group">
+            <label for="emailConfirm">이메일 주소 확인 <span class="req">*</span></label>
+            <input type="email" id="emailConfirm" name="emailConfirm" placeholder="이메일을 한 번 더 입력" autocomplete="email" required aria-describedby="emailConfirm-err" />
+            <span class="err-msg" id="emailConfirm-err" role="alert"></span>
+          </div>
+          <div class="form-group full">
             <label for="reason">신청 사유 <span class="req">*</span></label>
-            <select id="reason" name="reason">
+            <select id="reason" name="reason" required aria-describedby="reasonHelp reason-err">
               <option value="">선택</option>
               <option value="분실재발급">분실 재발급</option>
               <option value="훼손재발급">훼손 재발급</option>
             </select>
-            <span class="err-msg" id="reason-err"></span>
+            <span class="reason-help" id="reasonHelp">사유를 선택하면 준비 사항을 안내해 드립니다.</span>
+            <span class="err-msg" id="reason-err" role="alert"></span>
           </div>
         </div>
       </div>
 
-      <!-- Section 2: 개인정보 동의 -->
+      <!-- Section 2: 비용 및 개인정보 동의 -->
       <div class="form-section">
         <div class="section-label">
           <span class="num">2</span>
-          <h3>개인정보 수집 및 이용 동의</h3>
+          <h3>비용 및 개인정보 동의</h3>
         </div>
 
         <!-- 비용 안내 -->
@@ -530,57 +642,73 @@
           <div>
             <div class="cost-title">재발급 비용 안내</div>
             <div class="cost-amount">5,000원</div>
+            <div class="cost-note">납부 방법과 시기는 담당 교직원의 안내에 따라 진행됩니다.</div>
           </div>
         </div>
         <label class="agree-check" style="margin-bottom:20px">
-          <input type="checkbox" id="agreeCost" name="agreeCost" />
+          <input type="checkbox" id="agreeCost" name="agreeCost" autocomplete="off" />
           학생증 재발급 비용은 <strong>5,000원</strong>임을 확인하였습니다. <span class="req">*</span>
         </label>
-        <span class="err-msg" id="agreeCost-err"></span>
+        <span class="err-msg" id="agreeCost-err" role="alert"></span>
 
         <div class="agree-box">
           민족사관고등학교는 학생증 재발급 업무를 위하여 아래와 같이 개인정보를 수집·이용합니다.<br><br>
-          <strong>수집 항목:</strong> 이름, 학번, 학년·반, 휴대폰 번호, 이메일<br>
+          <strong>수집 항목:</strong> 이름, 학번, 학년·반, 이메일, 신청 사유<br>
           <strong>수집 목적:</strong> 학생증 제작 및 발급 완료 메일 발송<br>
           <strong>보유 기간:</strong> 발급 완료 후 1년<br><br>
           위의 개인정보 수집·이용에 대한 동의를 거부할 권리가 있습니다. 단, 동의 거부 시 학생증 재발급 서비스 이용이 어렵습니다.
         </div>
 
         <label class="agree-check">
-          <input type="checkbox" id="agree" name="agree" />
+          <input type="checkbox" id="agree" name="agree" autocomplete="off" />
           위 개인정보 수집·이용에 동의합니다. <span class="req">*</span>
         </label>
-        <span class="err-msg" id="agree-err"></span>
+        <span class="err-msg" id="agree-err" role="alert"></span>
       </div>
 
       <!-- Footer -->
       <div class="form-footer">
         <button type="submit" class="btn-submit" id="submitBtn">
           <div class="spinner"></div>
-          <span class="btn-text">신청서 제출하기 →</span>
+          <span class="btn-text">입력 내용 확인하기 →</span>
         </button>
       </div>
     </div>
   </form>
 </main>
 
+<!-- Review Modal -->
+<div class="overlay" id="reviewOverlay" role="dialog" aria-modal="true" aria-labelledby="reviewTitle" aria-hidden="true">
+  <div class="modal review-modal">
+    <h3 id="reviewTitle">신청 내용을 확인해 주세요</h3>
+    <p class="review-intro">전송 후에는 이 화면에서 수정할 수 없습니다.</p>
+    <dl class="review-list" id="reviewList"></dl>
+    <div class="modal-actions">
+      <button type="button" class="btn-secondary" id="editBtn">수정하기</button>
+      <button type="button" class="btn-primary" id="confirmSubmitBtn">확인 후 전송</button>
+    </div>
+  </div>
+</div>
+
 <!-- Success Modal -->
-<div class="overlay" id="successOverlay">
+<div class="overlay" id="successOverlay" role="dialog" aria-modal="true" aria-labelledby="successTitle" aria-hidden="true">
   <div class="modal">
     <span class="modal-icon">✅</span>
-    <h3>신청이 완료되었습니다!</h3>
-    <p>접수번호</p>
+    <h3 id="successTitle">신청 요청이 전송되었습니다</h3>
+    <p>전송 확인번호</p>
     <div class="modal-num" id="receiptNum">—</div>
-    <p>학생증 제작이 완료되면<br><strong id="confirmedEmail"></strong>으로 이메일이 발송됩니다.<br><br>평균 처리 기간: <strong>2~3 영업일</strong></p>
+    <button type="button" class="copy-btn" id="copyReceiptBtn">확인번호 복사</button>
+    <div class="copy-status" id="copyStatus" role="status"></div>
+    <p>요청이 담당 시스템으로 전송되었습니다.<br>학생증 제작이 완료되면 <strong id="confirmedEmail"></strong>으로 이메일이 발송됩니다.<br><br>평균 처리 기간: <strong>2~3 영업일</strong></p>
     <button class="btn-close" onclick="location.reload()">확인</button>
   </div>
 </div>
 
 <!-- Error Modal -->
-<div class="overlay" id="errorOverlay">
+<div class="overlay" id="errorOverlay" role="alertdialog" aria-modal="true" aria-labelledby="errorTitle" aria-hidden="true">
   <div class="modal">
     <span class="modal-icon">⚠️</span>
-    <h3>제출에 실패했습니다</h3>
+    <h3 id="errorTitle">전송하지 못했습니다</h3>
     <p id="errorMsg">잠시 후 다시 시도해 주세요.</p>
     <button class="btn-close" onclick="document.getElementById('errorOverlay').classList.remove('show')">닫기</button>
   </div>
@@ -589,99 +717,254 @@
 <script>
   // ── 설정: Apps Script Web App URL ──
   const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxb5215g4KksTB__0SlLqftzShcBY3Nz-wMFRYToQ3wsCH4LElnDZ1fXzSpLeTVJW-8AQ/exec';
+  const DRAFT_KEY = 'studentIdApplicationDraftV1';
+  const LAST_SUBMISSION_KEY = 'studentIdLastSubmissionV1';
+  const DEDUPE_WINDOW_MS = 5 * 60 * 1000;
+  const draftFieldIds = ['name', 'studentId', 'grade', 'classNum', 'email', 'emailConfirm', 'reason'];
+  let lastFocusedElement = null;
 
-  // ── 유효성 검사 ──
-  function validate() {
-    let ok = true;
-    const fields = [
-      { id: 'name', msg: '이름을 입력해 주세요.' },
-      { id: 'studentId', msg: '학번을 입력해 주세요.' },
-      { id: 'grade', msg: '학년을 선택해 주세요.' },
-      { id: 'classNum', msg: '반을 선택해 주세요.' },
-      { id: 'reason', msg: '신청 사유를 선택해 주세요.' },
-    ];
-    fields.forEach(({ id, msg }) => {
-      const el = document.getElementById(id);
-      const err = document.getElementById(id + '-err');
-      if (!el.value.trim()) {
-        err.textContent = msg; el.classList.add('error'); ok = false;
-      } else { err.textContent = ''; el.classList.remove('error'); }
-    });
-
-    const email = document.getElementById('email').value.trim();
-    const emailErr = document.getElementById('email-err');
-    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    if (!emailOk) {
-      emailErr.textContent = '올바른 이메일 주소를 입력해 주세요.';
-      document.getElementById('email').classList.add('error');
-      ok = false;
-    } else { emailErr.textContent = ''; document.getElementById('email').classList.remove('error'); }
-
-    const agreeErr = document.getElementById('agree-err');
-    if (!document.getElementById('agree').checked) {
-      agreeErr.textContent = '개인정보 수집·이용에 동의해 주세요.'; ok = false;
-    } else { agreeErr.textContent = ''; }
-
-    const agreeCostErr = document.getElementById('agreeCost-err');
-    if (!document.getElementById('agreeCost').checked) {
-      agreeCostErr.textContent = '재발급 비용(5,000원)을 확인해 주세요.'; ok = false;
-    } else { agreeCostErr.textContent = ''; }
-
-    return ok;
-  }
-
-  // ── 폼 제출 ──
-  document.getElementById('applyForm').addEventListener('submit', async e => {
-    e.preventDefault();
-    if (!validate()) return;
-
-    const btn = document.getElementById('submitBtn');
-    btn.disabled = true;
-    btn.classList.add('loading');
-
-    const email = document.getElementById('email').value.trim();
-    const payload = {
-      action: 'submit',
+  function getFormData() {
+    return {
       name: document.getElementById('name').value.trim(),
       studentId: document.getElementById('studentId').value.trim(),
       grade: document.getElementById('grade').value,
       classNum: document.getElementById('classNum').value,
-      email: email,
+      email: document.getElementById('email').value.trim(),
       reason: document.getElementById('reason').value,
+    };
+  }
+
+  function setFieldError(id, message) {
+    const field = document.getElementById(id);
+    const error = document.getElementById(id + '-err');
+    if (error) error.textContent = message;
+    if (field) {
+      field.classList.toggle('error', Boolean(message));
+      field.setAttribute('aria-invalid', message ? 'true' : 'false');
+    }
+    return Boolean(message);
+  }
+
+  function validate() {
+    const data = getFormData();
+    const errors = [];
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (setFieldError('name', data.name ? '' : '이름을 입력해 주세요.')) errors.push('name');
+    if (setFieldError('studentId', /^\d{5}$/.test(data.studentId) ? '' : '학번을 숫자 5자리로 입력해 주세요.')) errors.push('studentId');
+    if (setFieldError('grade', data.grade ? '' : '학년을 선택해 주세요.')) errors.push('grade');
+    if (setFieldError('classNum', data.classNum ? '' : '반을 선택해 주세요.')) errors.push('classNum');
+    if (setFieldError('email', emailPattern.test(data.email) ? '' : '올바른 이메일 주소를 입력해 주세요.')) errors.push('email');
+
+    const emailConfirm = document.getElementById('emailConfirm').value.trim();
+    const emailConfirmMessage = !emailConfirm
+      ? '이메일 주소를 한 번 더 입력해 주세요.'
+      : emailConfirm !== data.email ? '이메일 주소가 일치하지 않습니다.' : '';
+    if (setFieldError('emailConfirm', emailConfirmMessage)) errors.push('emailConfirm');
+    if (setFieldError('reason', data.reason ? '' : '신청 사유를 선택해 주세요.')) errors.push('reason');
+
+    const agreeCost = document.getElementById('agreeCost');
+    const agree = document.getElementById('agree');
+    const costMissing = !agreeCost.checked;
+    const privacyMissing = !agree.checked;
+    document.getElementById('agreeCost-err').textContent = costMissing ? '재발급 비용(5,000원)을 확인해 주세요.' : '';
+    document.getElementById('agree-err').textContent = privacyMissing ? '개인정보 수집·이용에 동의해 주세요.' : '';
+    agreeCost.setAttribute('aria-invalid', costMissing ? 'true' : 'false');
+    agree.setAttribute('aria-invalid', privacyMissing ? 'true' : 'false');
+    if (costMissing) errors.push('agreeCost');
+    if (privacyMissing) errors.push('agree');
+
+    const summary = document.getElementById('errorSummary');
+    summary.classList.toggle('show', errors.length > 0);
+    if (errors.length) {
+      summary.focus();
+      setTimeout(() => document.getElementById(errors[0]).focus(), 0);
+      return false;
+    }
+    return true;
+  }
+
+  function updateReasonHelp() {
+    const reason = document.getElementById('reason').value;
+    const messages = {
+      '분실재발급': '분실한 기존 학생증을 찾은 경우 담당 교직원에게 알려 주세요.',
+      '훼손재발급': '훼손된 기존 학생증은 새 학생증 수령 시 반납해 주세요.',
+    };
+    document.getElementById('reasonHelp').textContent = messages[reason] || '사유를 선택하면 준비 사항을 안내해 드립니다.';
+  }
+
+  function saveDraft() {
+    const draft = {};
+    draftFieldIds.forEach(id => { draft[id] = document.getElementById(id).value; });
+    try { sessionStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); } catch (error) { /* 저장 불가 환경 */ }
+  }
+
+  function restoreDraft() {
+    try {
+      const draft = JSON.parse(sessionStorage.getItem(DRAFT_KEY) || 'null');
+      if (!draft || !draftFieldIds.some(id => draft[id])) return;
+      draftFieldIds.forEach(id => {
+        if (typeof draft[id] === 'string') document.getElementById(id).value = draft[id];
+      });
+      document.getElementById('draftNotice').classList.add('show');
+      updateReasonHelp();
+    } catch (error) { sessionStorage.removeItem(DRAFT_KEY); }
+  }
+
+  function setOverlay(id, show) {
+    const overlay = document.getElementById(id);
+    overlay.classList.toggle('show', show);
+    overlay.setAttribute('aria-hidden', show ? 'false' : 'true');
+    document.body.style.overflow = show ? 'hidden' : '';
+  }
+
+  function showReview() {
+    const data = getFormData();
+    const rows = [
+      ['이름', data.name], ['학번', data.studentId], ['학년·반', `${data.grade}학년 ${data.classNum}반`],
+      ['이메일', data.email], ['신청 사유', data.reason === '분실재발급' ? '분실 재발급' : '훼손 재발급'], ['재발급 비용', '5,000원'],
+    ];
+    const list = document.getElementById('reviewList');
+    list.textContent = '';
+    rows.forEach(([label, value]) => {
+      const row = document.createElement('div');
+      row.className = 'review-row';
+      const term = document.createElement('dt');
+      const detail = document.createElement('dd');
+      term.textContent = label;
+      detail.textContent = value;
+      row.append(term, detail);
+      list.appendChild(row);
+    });
+    lastFocusedElement = document.activeElement;
+    document.querySelector('.progress-step[data-step="3"]').classList.add('active');
+    setOverlay('reviewOverlay', true);
+    document.getElementById('editBtn').focus();
+  }
+
+  function makeRequestId() {
+    const random = Math.random().toString(36).slice(2, 7).toUpperCase();
+    return `REQ-${Date.now().toString(36).toUpperCase()}-${random}`;
+  }
+
+  function makeSubmissionHash(value) {
+    let hash = 2166136261;
+    for (let index = 0; index < value.length; index += 1) {
+      hash ^= value.charCodeAt(index);
+      hash = Math.imul(hash, 16777619);
+    }
+    return (hash >>> 0).toString(36);
+  }
+
+  function showError(message) {
+    document.getElementById('errorMsg').textContent = message;
+    setOverlay('errorOverlay', true);
+  }
+
+  document.getElementById('applyForm').addEventListener('submit', event => {
+    event.preventDefault();
+    if (validate()) showReview();
+  });
+
+  document.getElementById('editBtn').addEventListener('click', () => {
+    setOverlay('reviewOverlay', false);
+    document.querySelector('.progress-step[data-step="3"]').classList.remove('active');
+    (lastFocusedElement || document.getElementById('name')).focus();
+  });
+
+  document.getElementById('confirmSubmitBtn').addEventListener('click', async () => {
+    const data = getFormData();
+    const signature = JSON.stringify(data);
+    const submissionHash = makeSubmissionHash(signature);
+    try {
+      const previous = JSON.parse(localStorage.getItem(LAST_SUBMISSION_KEY) || 'null');
+      if (previous && previous.hash === submissionHash && Date.now() - previous.time < DEDUPE_WINDOW_MS) {
+        setOverlay('reviewOverlay', false);
+        showError('같은 내용이 최근 5분 이내에 전송되었습니다. 중복 신청 여부를 확인해 주세요.');
+        return;
+      }
+    } catch (error) { localStorage.removeItem(LAST_SUBMISSION_KEY); }
+
+    const requestId = makeRequestId();
+    const payload = {
+      action: 'submit',
+      ...data,
+      requestId,
       timestamp: new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }),
     };
+    const submitBtn = document.getElementById('submitBtn');
+    const confirmBtn = document.getElementById('confirmSubmitBtn');
+    submitBtn.disabled = true;
+    submitBtn.classList.add('loading');
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = '전송 중…';
 
     try {
-      const res = await fetch(APPS_SCRIPT_URL, {
+      await fetch(APPS_SCRIPT_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
         mode: 'no-cors',
       });
-
-      // no-cors 모드에서는 응답을 읽을 수 없으므로 성공으로 처리
-      const receiptNum = 'ID-' + Date.now().toString().slice(-6);
-      document.getElementById('receiptNum').textContent = receiptNum;
-      document.getElementById('confirmedEmail').textContent = email;
-      document.getElementById('successOverlay').classList.add('show');
-
-    } catch (err) {
-      document.getElementById('errorMsg').textContent = '서버와 통신 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.';
-      document.getElementById('errorOverlay').classList.add('show');
+      try {
+        localStorage.setItem(LAST_SUBMISSION_KEY, JSON.stringify({ hash: submissionHash, time: Date.now() }));
+        sessionStorage.removeItem(DRAFT_KEY);
+      } catch (error) { /* 저장 불가 환경 */ }
+      document.getElementById('receiptNum').textContent = requestId;
+      document.getElementById('confirmedEmail').textContent = data.email;
+      setOverlay('reviewOverlay', false);
+      setOverlay('successOverlay', true);
+      document.getElementById('copyReceiptBtn').focus();
+    } catch (error) {
+      setOverlay('reviewOverlay', false);
+      showError('서버와 통신 중 오류가 발생했습니다. 입력 내용은 이 브라우저에 임시 저장되어 있습니다. 잠시 후 다시 시도해 주세요.');
     } finally {
-      btn.disabled = false;
-      btn.classList.remove('loading');
+      submitBtn.disabled = false;
+      submitBtn.classList.remove('loading');
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = '확인 후 전송';
     }
   });
 
-  // 입력 시 에러 제거
-  document.querySelectorAll('input, select').forEach(el => {
-    el.addEventListener('input', () => {
-      el.classList.remove('error');
-      const err = document.getElementById(el.id + '-err');
-      if (err) err.textContent = '';
+  document.getElementById('copyReceiptBtn').addEventListener('click', async () => {
+    const value = document.getElementById('receiptNum').textContent;
+    try {
+      await navigator.clipboard.writeText(value);
+      document.getElementById('copyStatus').textContent = '확인번호를 복사했습니다.';
+    } catch (error) {
+      document.getElementById('copyStatus').textContent = `확인번호: ${value}`;
+    }
+  });
+
+  document.querySelectorAll('input, select').forEach(element => {
+    const eventName = element.tagName === 'SELECT' || element.type === 'checkbox' ? 'change' : 'input';
+    element.addEventListener(eventName, () => {
+      element.classList.remove('error');
+      element.setAttribute('aria-invalid', 'false');
+      const error = document.getElementById(element.id + '-err');
+      if (error) error.textContent = '';
+      document.getElementById('errorSummary').classList.remove('show');
+      if (!element.matches('[type="checkbox"]')) saveDraft();
+      if (element.id === 'reason') updateReasonHelp();
     });
   });
+
+  document.getElementById('studentId').addEventListener('input', event => {
+    event.target.value = event.target.value.replace(/\D/g, '').slice(0, 5);
+  });
+
+  document.querySelector('#errorOverlay .btn-close').addEventListener('click', () => {
+    setOverlay('errorOverlay', false);
+    document.getElementById('submitBtn').focus();
+  });
+
+  document.getElementById('agreeCost').checked = false;
+  document.getElementById('agree').checked = false;
+  window.addEventListener('pageshow', () => {
+    document.getElementById('agreeCost').checked = false;
+    document.getElementById('agree').checked = false;
+  });
+  restoreDraft();
 </script>
 </body>
 </html>
