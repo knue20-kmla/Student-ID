@@ -217,12 +217,43 @@
       border-radius: 12px;
       padding: 20px 22px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 4px;
+      background: #cbd5e1;
+    }
+
+    .stat-card.pending::before { background: var(--gold); }
+    .stat-card.completed::before { background: var(--success); }
+    .stat-card.today::before { background: #3b82f6; }
+
+    .stat-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .stat-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 9px;
+      display: grid;
+      place-items: center;
+      background: #f5f2eb;
+      font-size: 0.9rem;
     }
 
     .stat-card .label {
       font-size: 0.78rem;
       color: var(--muted);
-      margin-bottom: 8px;
+      margin-bottom: 0;
     }
 
     .stat-card .value {
@@ -265,6 +296,7 @@
       display: flex;
       align-items: center;
       gap: 10px;
+      flex-wrap: wrap;
     }
 
     .filter-row select, .filter-row input {
@@ -281,7 +313,87 @@
 
     .filter-row select:focus, .filter-row input:focus { border-color: var(--gold); }
 
-    .table-wrap { overflow-x: auto; }
+    .bulk-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 24px;
+      background: #faf9f6;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 60px;
+      z-index: 20;
+      box-shadow: 0 4px 12px rgba(18, 35, 62, 0.04);
+      min-height: 54px;
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+
+    .bulk-actions.active {
+      background: #ecfdf3;
+      box-shadow: inset 4px 0 #16a34a, 0 4px 12px rgba(18, 35, 62, 0.06);
+    }
+
+    .bulk-hint { color: var(--muted); font-size: 0.8rem; }
+    .bulk-actions.active .bulk-hint { display: none; }
+    .bulk-selection-controls { display: none; align-items: center; gap: 10px; }
+    .bulk-actions.active .bulk-selection-controls { display: flex; }
+
+    .selection-count {
+      min-width: 72px;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .btn-bulk-complete {
+      border: none;
+      border-radius: 8px;
+      padding: 9px 16px;
+      background: linear-gradient(135deg, #15803d, #16a34a);
+      color: #fff;
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    .btn-bulk-complete:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
+    .btn-bulk-complete:disabled { background: #d8d5cd; color: #89857c; cursor: default; }
+
+    .btn-secondary {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      background: #fff;
+      color: var(--text);
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+
+    .btn-secondary:hover { border-color: var(--gold); color: var(--navy); }
+    .btn-secondary:disabled { opacity: 0.45; cursor: default; }
+
+    .row-check, #selectAll {
+      width: 17px;
+      height: 17px;
+      accent-color: #15803d;
+      cursor: pointer;
+    }
+
+    .check-cell { width: 44px; text-align: center; }
+
+    tbody tr.selected { background: #ecfdf3; }
+    tbody tr.selected:hover { background: #e2f9eb; }
+
+    .email-invalid {
+      color: #b91c1c;
+      font-weight: 600;
+      text-decoration: underline dotted;
+      text-underline-offset: 3px;
+    }
+
+    .table-wrap { overflow: auto; max-height: 62vh; }
 
     table {
       width: 100%;
@@ -300,6 +412,10 @@
       text-transform: uppercase;
       border-bottom: 1px solid var(--border);
       white-space: nowrap;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      box-shadow: 0 1px 0 var(--border);
     }
 
     tbody tr {
@@ -311,7 +427,7 @@
     tbody tr:last-child { border-bottom: none; }
 
     tbody td {
-      padding: 14px 16px;
+      padding: 11px 16px;
       color: var(--text);
       vertical-align: middle;
     }
@@ -355,31 +471,31 @@
     .no-photo {
       width: 36px;
       height: 48px;
-      background: #f0ebe0;
+      background: transparent;
       border-radius: 4px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.7rem;
+      font-size: 1rem;
       color: var(--muted);
     }
 
     /* ── Complete button ── */
     .btn-complete {
-      background: linear-gradient(135deg, #15803d, #16a34a);
-      color: #fff;
-      border: none;
+      background: #fff;
+      color: #15803d;
+      border: 1px solid #86c99d;
       border-radius: 7px;
       padding: 7px 14px;
       font-family: 'Noto Sans KR', sans-serif;
       font-size: 0.78rem;
       font-weight: 500;
       cursor: pointer;
-      transition: opacity 0.2s, transform 0.1s;
+      transition: color 0.2s, background 0.2s, border-color 0.2s, transform 0.1s;
       white-space: nowrap;
     }
 
-    .btn-complete:hover:not(:disabled) { opacity: 0.85; transform: translateY(-1px); }
+    .btn-complete:hover:not(:disabled) { color: #fff; background: #15803d; border-color: #15803d; transform: translateY(-1px); }
     .btn-complete:disabled { background: #d1fae5; color: #6ee7b7; cursor: default; }
 
     .btn-complete.loading-btn {
@@ -482,14 +598,74 @@
       cursor: pointer;
     }
 
+    /* ── Confirmation Modal ── */
+    .confirm-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 400;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(10, 24, 49, 0.55);
+      backdrop-filter: blur(3px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+
+    .confirm-overlay.show { opacity: 1; pointer-events: auto; }
+
+    .confirm-dialog {
+      width: min(460px, 100%);
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 28px 80px rgba(0,0,0,0.28);
+      overflow: hidden;
+      transform: translateY(10px) scale(0.98);
+      transition: transform 0.2s;
+    }
+
+    .confirm-overlay.show .confirm-dialog { transform: translateY(0) scale(1); }
+    .confirm-body { padding: 26px; }
+    .confirm-icon { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 12px; background: #ecfdf3; margin-bottom: 16px; font-size: 1.25rem; }
+    .confirm-dialog h3 { color: var(--navy); font-family: 'Noto Serif KR', serif; font-size: 1.1rem; margin-bottom: 8px; }
+    .confirm-dialog p { color: var(--muted); font-size: 0.85rem; line-height: 1.6; }
+    .confirm-names { margin-top: 16px; padding: 12px 14px; background: #f8f7f3; border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 0.82rem; line-height: 1.7; max-height: 150px; overflow-y: auto; }
+    .confirm-warning { margin-top: 12px; color: #92400e; font-size: 0.76rem; }
+    .confirm-actions { display: flex; justify-content: flex-end; gap: 10px; padding: 16px 26px; background: #faf9f6; border-top: 1px solid var(--border); }
+    .confirm-cancel, .confirm-submit { border-radius: 9px; padding: 9px 16px; font-family: inherit; font-size: 0.82rem; font-weight: 600; cursor: pointer; }
+    .confirm-cancel { background: #fff; border: 1px solid var(--border); color: var(--text); }
+    .confirm-submit { background: #15803d; border: 1px solid #15803d; color: #fff; }
+
     @media (max-width: 768px) {
       .stats-row { grid-template-columns: 1fr 1fr; }
       .top-bar-right .last-refresh { display: none; }
+      .top-bar { padding: 0 14px; }
+      .top-bar-left { gap: 8px; }
+      .top-bar-left .logo { width: 32px; height: 32px; }
+      .top-bar-left h1 { font-size: 0.86rem; white-space: nowrap; }
+      .top-bar-right { gap: 6px; }
+      .btn-refresh, .btn-logout { padding: 7px 9px; font-size: 0.72rem; white-space: nowrap; }
+      .content { padding: 18px 14px 48px; }
+      .table-wrap { max-height: none; overflow: visible; }
+      table, tbody { display: block; }
+      thead { display: none; }
+      tbody tr { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; padding: 14px; border-bottom: 8px solid #f5f2eb; }
+      tbody td { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 3px 0; text-align: right; }
+      tbody td::before { content: attr(data-label); color: var(--muted); font-size: 0.72rem; font-weight: 500; text-align: left; white-space: nowrap; }
+      tbody td.check-cell { grid-column: 1 / -1; justify-content: flex-start; }
+      tbody td.check-cell::before { content: '선택'; }
+      tbody td[data-label="이메일"], tbody td[data-label="신청일시"], tbody td[data-label="사유"] { grid-column: 1 / -1; }
+      .photo-thumb, .no-photo { width: 30px; height: 38px; }
     }
 
     @media (max-width: 480px) {
       .stats-row { grid-template-columns: 1fr 1fr; }
       .table-header { flex-direction: column; align-items: flex-start; }
+      .bulk-actions { padding: 10px 14px; align-items: stretch; flex-direction: column; }
+      .bulk-selection-controls { flex-direction: column; align-items: stretch; }
+      .btn-bulk-complete, .btn-secondary { width: 100%; }
     }
   </style>
 </head>
@@ -524,20 +700,20 @@
   <div class="content">
     <!-- Stats -->
     <div class="stats-row">
-      <div class="stat-card">
-        <div class="label">전체 신청</div>
+      <div class="stat-card total">
+        <div class="stat-heading"><div class="label">전체 신청</div><div class="stat-icon">▦</div></div>
         <div class="value" id="statTotal">—</div>
       </div>
-      <div class="stat-card">
-        <div class="label">대기 중</div>
+      <div class="stat-card pending">
+        <div class="stat-heading"><div class="label">대기 중</div><div class="stat-icon">◷</div></div>
         <div class="value gold" id="statPending">—</div>
       </div>
-      <div class="stat-card">
-        <div class="label">제작 완료</div>
+      <div class="stat-card completed">
+        <div class="stat-heading"><div class="label">제작 완료</div><div class="stat-icon">✓</div></div>
         <div class="value green" id="statDone">—</div>
       </div>
-      <div class="stat-card">
-        <div class="label">오늘 신청</div>
+      <div class="stat-card today">
+        <div class="stat-heading"><div class="label">오늘 신청</div><div class="stat-icon">＋</div></div>
         <div class="value" id="statToday">—</div>
       </div>
     </div>
@@ -550,7 +726,7 @@
           <input type="text" id="searchInput" placeholder="이름 · 학번 검색" oninput="renderTable()" style="width:160px" />
           <select id="filterStatus" onchange="renderTable()">
             <option value="">전체 상태</option>
-            <option value="대기중">대기 중</option>
+            <option value="대기중" selected>대기 중</option>
             <option value="완료">완료</option>
           </select>
           <select id="filterGrade" onchange="renderTable()">
@@ -559,6 +735,24 @@
             <option value="2">2학년</option>
             <option value="3">3학년</option>
           </select>
+          <select id="sortOrder" onchange="renderTable()" aria-label="정렬 순서">
+            <option value="newest">최신 신청순</option>
+            <option value="oldest">오래된 신청순</option>
+            <option value="name">이름순</option>
+            <option value="class">학년·반순</option>
+          </select>
+          <button class="btn-secondary" onclick="exportCsv()">CSV 다운로드</button>
+        </div>
+      </div>
+
+      <div class="bulk-actions">
+        <span class="bulk-hint">신청자를 선택하면 일괄 완료 및 메일 발송을 할 수 있습니다.</span>
+        <div class="bulk-selection-controls">
+          <span class="selection-count" id="selectionCount">0명 선택</span>
+          <button class="btn-bulk-complete" id="bulkCompleteBtn" onclick="markSelectedComplete()" disabled>
+            선택 항목 제작 완료 · 메일 발송
+          </button>
+          <button class="btn-secondary" id="clearSelectionBtn" onclick="clearSelection()" disabled>선택 해제</button>
         </div>
       </div>
 
@@ -566,6 +760,7 @@
         <table>
           <thead>
             <tr>
+              <th class="check-cell"><input type="checkbox" id="selectAll" aria-label="현재 목록 전체 선택" onchange="toggleSelectAll(this.checked)" /></th>
               <th>접수번호</th>
               <th>이름</th>
               <th>학번</th>
@@ -580,7 +775,7 @@
           </thead>
           <tbody id="tableBody">
             <tr class="loading-row">
-              <td colspan="10">
+              <td colspan="11">
                 <div class="spinner-lg"></div>
                 <div style="font-size:0.85rem;color:#999">데이터 불러오는 중...</div>
               </td>
@@ -600,6 +795,23 @@
 
 <!-- Toast -->
 <div class="toast-wrap" id="toastWrap"></div>
+
+<!-- Confirmation Modal -->
+<div class="confirm-overlay" id="confirmOverlay" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+  <div class="confirm-dialog">
+    <div class="confirm-body">
+      <div class="confirm-icon">✉</div>
+      <h3 id="confirmTitle">제작 완료 및 메일 발송</h3>
+      <p id="confirmMessage"></p>
+      <div class="confirm-names" id="confirmNames"></div>
+      <div class="confirm-warning">완료 처리 후 신청자에게 안내 메일이 발송됩니다.</div>
+    </div>
+    <div class="confirm-actions">
+      <button class="confirm-cancel" onclick="resolveConfirm(false)">취소</button>
+      <button class="confirm-submit" id="confirmSubmit" onclick="resolveConfirm(true)">완료 처리 및 발송</button>
+    </div>
+  </div>
+</div>
 
 <script>
   // ── 설정 ──
@@ -625,12 +837,20 @@
 
   // ── 데이터 ──
   let allData = [];
+  const selectedRows = new Set();
+  let isBulkProcessing = false;
 
   async function loadData() {
     try {
       const res = await fetch(`${APPS_SCRIPT_URL}?action=list&t=${Date.now()}`);
       const json = await res.json();
       allData = json.data || [];
+      const pendingIndexes = new Set(
+        allData.filter(r => r.status !== '완료').map(r => String(r.rowIndex))
+      );
+      [...selectedRows].forEach(rowIndex => {
+        if (!pendingIndexes.has(rowIndex)) selectedRows.delete(rowIndex);
+      });
       updateStats();
       renderTable();
       document.getElementById('lastRefresh').textContent =
@@ -658,48 +878,61 @@
     const statusFilter = document.getElementById('filterStatus').value;
     const gradeFilter = document.getElementById('filterGrade').value;
 
-    let rows = allData.filter(r => {
-      const matchSearch = !search || r.name?.toLowerCase().includes(search) || r.studentId?.includes(search);
-      const matchStatus = !statusFilter || r.status === statusFilter;
-      const matchGrade = !gradeFilter || r.grade === gradeFilter;
-      return matchSearch && matchStatus && matchGrade;
+    let rows = getFilteredRows();
+
+    const sortOrder = document.getElementById('sortOrder').value;
+    rows.sort((a, b) => {
+      if (sortOrder === 'oldest') return Number(a.rowIndex) - Number(b.rowIndex);
+      if (sortOrder === 'name') return String(a.name || '').localeCompare(String(b.name || ''), 'ko');
+      if (sortOrder === 'class') {
+        return (Number(a.grade) - Number(b.grade)) ||
+          (Number(a.classNum) - Number(b.classNum)) ||
+          String(a.name || '').localeCompare(String(b.name || ''), 'ko');
+      }
+      return Number(b.rowIndex) - Number(a.rowIndex);
     });
 
     const tbody = document.getElementById('tableBody');
 
     if (rows.length === 0) {
       tbody.innerHTML = `
-        <tr><td colspan="10">
+        <tr><td colspan="11">
           <div class="empty-state">
             <div class="icon">📭</div>
             <div>해당하는 신청 내역이 없습니다.</div>
           </div>
         </td></tr>`;
+      updateSelectionUI();
       return;
     }
 
     tbody.innerHTML = rows.map((r, i) => {
       const isDone = r.status === '완료';
+      const isSelected = selectedRows.has(String(r.rowIndex));
+      const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(r.email || '').trim());
       const photoCell = r.photo
         ? `<img src="${r.photo}" class="photo-thumb" onclick="openPhoto('${r.photo}')" title="사진 보기" />`
-        : `<div class="no-photo">없음</div>`;
+        : `<div class="no-photo" title="사진 없음">▧</div>`;
 
       return `
-        <tr>
-          <td class="mono">${r.rowNum || (i+1)}</td>
-          <td><strong>${r.name || ''}</strong></td>
-          <td class="mono">${r.studentId || ''}</td>
-          <td>${r.grade || ''}학년 ${r.classNum || ''}반</td>
-          <td><span style="font-size:0.8rem">${r.reason || ''}</span></td>
-          <td class="mono" style="font-size:0.8rem">${r.email || ''}</td>
-          <td>${photoCell}</td>
-          <td style="font-size:0.78rem;color:var(--muted);white-space:nowrap">${r.timestamp || ''}</td>
-          <td>
+        <tr class="${isSelected ? 'selected' : ''}">
+          <td class="check-cell" data-label="선택">
+            ${isDone ? '' : `<input type="checkbox" class="row-check" value="${r.rowIndex}" aria-label="${r.name || '신청자'} 선택" ${isSelected ? 'checked' : ''} onchange="toggleRowSelection(this)" />`}
+          </td>
+          <td class="mono" data-label="접수번호">${r.rowNum || (i+1)}</td>
+          <td data-label="이름"><strong>${r.name || ''}</strong></td>
+          <td class="mono" data-label="학번">${r.studentId || ''}</td>
+          <td data-label="학년/반">${r.grade || ''}학년 ${r.classNum || ''}반</td>
+          <td data-label="사유"><span style="font-size:0.8rem">${r.reason || ''}</span></td>
+          <td data-label="이메일" class="mono ${isEmailValid ? '' : 'email-invalid'}" style="font-size:0.8rem" title="${isEmailValid ? '' : '이메일 형식을 확인해 주세요'}">${r.email || '이메일 없음'}</td>
+          <td data-label="사진">${photoCell}</td>
+          <td data-label="신청일시" style="font-size:0.78rem;color:var(--muted);white-space:nowrap">${r.timestamp || ''}</td>
+          <td data-label="상태">
             <span class="badge ${isDone ? 'done' : 'pending'}">
               ${isDone ? '✅ 완료' : '⏳ 대기'}
             </span>
           </td>
-          <td>
+          <td data-label="완료처리">
             ${isDone
               ? `<span class="done-label">완료됨</span>`
               : `<button class="btn-complete" onclick="markComplete(${r.rowIndex}, this)">제작 완료 ✓</button>`
@@ -707,11 +940,175 @@
           </td>
         </tr>`;
     }).join('');
+    updateSelectionUI();
+  }
+
+  function getFilteredRows() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const statusFilter = document.getElementById('filterStatus').value;
+    const gradeFilter = document.getElementById('filterGrade').value;
+
+    return allData.filter(r => {
+      const matchSearch = !search || r.name?.toLowerCase().includes(search) || r.studentId?.includes(search);
+      const matchStatus = !statusFilter || r.status === statusFilter;
+      const matchGrade = !gradeFilter || r.grade === gradeFilter;
+      return matchSearch && matchStatus && matchGrade;
+    });
+  }
+
+  // ── 일괄 선택 ──
+  function toggleRowSelection(checkbox) {
+    if (checkbox.checked) selectedRows.add(checkbox.value);
+    else selectedRows.delete(checkbox.value);
+    checkbox.closest('tr')?.classList.toggle('selected', checkbox.checked);
+    updateSelectionUI();
+  }
+
+  function toggleSelectAll(checked) {
+    document.querySelectorAll('.row-check').forEach(checkbox => {
+      checkbox.checked = checked;
+      checkbox.closest('tr')?.classList.toggle('selected', checked);
+      if (checked) selectedRows.add(checkbox.value);
+      else selectedRows.delete(checkbox.value);
+    });
+    updateSelectionUI();
+  }
+
+  function clearSelection() {
+    selectedRows.clear();
+    document.querySelectorAll('.row-check').forEach(checkbox => {
+      checkbox.checked = false;
+      checkbox.closest('tr')?.classList.remove('selected');
+    });
+    updateSelectionUI();
+  }
+
+  function updateSelectionUI() {
+    const visibleChecks = [...document.querySelectorAll('.row-check')];
+    const selectedVisible = visibleChecks.filter(checkbox => checkbox.checked).length;
+    const selectAll = document.getElementById('selectAll');
+    const bulkBtn = document.getElementById('bulkCompleteBtn');
+    const clearBtn = document.getElementById('clearSelectionBtn');
+    const bulkActions = document.querySelector('.bulk-actions');
+
+    if (selectAll) {
+      selectAll.checked = visibleChecks.length > 0 && selectedVisible === visibleChecks.length;
+      selectAll.indeterminate = selectedVisible > 0 && selectedVisible < visibleChecks.length;
+      selectAll.disabled = isBulkProcessing || visibleChecks.length === 0;
+    }
+
+    document.getElementById('selectionCount').textContent = `${selectedRows.size}명 선택`;
+    bulkActions.classList.toggle('active', selectedRows.size > 0);
+    bulkBtn.disabled = isBulkProcessing || selectedRows.size === 0;
+    clearBtn.disabled = isBulkProcessing || selectedRows.size === 0;
+    document.querySelectorAll('.row-check').forEach(checkbox => {
+      checkbox.disabled = isBulkProcessing;
+    });
+  }
+
+  async function sendCompleteRequest(rowIndex) {
+    await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'complete', rowIndex: Number(rowIndex) }),
+      mode: 'no-cors',
+    });
+  }
+
+  async function markSelectedComplete() {
+    const rowIndexes = [...selectedRows];
+    if (rowIndexes.length === 0) return;
+    const selectedNames = rowIndexes
+      .map(rowIndex => allData.find(r => String(r.rowIndex) === rowIndex)?.name)
+      .filter(Boolean);
+    const confirmed = await openConfirmModal({
+      title: `${rowIndexes.length}명 제작 완료 처리`,
+      message: '선택한 신청자를 제작 완료 상태로 변경합니다.',
+      names: selectedNames,
+      submitText: `${rowIndexes.length}명 완료 처리 및 발송`,
+    });
+    if (!confirmed) return;
+
+    const btn = document.getElementById('bulkCompleteBtn');
+    isBulkProcessing = true;
+    updateSelectionUI();
+    let sent = 0;
+    let failed = 0;
+
+    for (const rowIndex of rowIndexes) {
+      const row = allData.find(r => String(r.rowIndex) === rowIndex);
+      btn.textContent = `처리 중 ${sent + failed + 1}/${rowIndexes.length} · ${row?.name || ''}`;
+      try {
+        await sendCompleteRequest(rowIndex);
+        sent += 1;
+      } catch (e) {
+        failed += 1;
+      }
+    }
+
+    btn.textContent = '결과 확인 중...';
+    await new Promise(resolve => setTimeout(resolve, 2500));
+    await loadData();
+    const confirmedCount = rowIndexes.filter(rowIndex =>
+      allData.some(r => String(r.rowIndex) === rowIndex && r.status === '완료')
+    ).length;
+    const unconfirmedCount = rowIndexes.length - confirmedCount;
+    selectedRows.clear();
+    isBulkProcessing = false;
+    btn.textContent = '선택 항목 제작 완료 · 메일 발송';
+    updateSelectionUI();
+
+    if (failed === 0 && unconfirmedCount === 0) {
+      showToast(`✅ ${confirmedCount}명 완료 처리 및 이메일 발송 확인`, 'success');
+    } else if (failed === 0) {
+      showToast(`⚠️ ${confirmedCount}명 완료 확인, ${unconfirmedCount}명은 아직 처리 확인 중입니다.`, 'error');
+    } else {
+      showToast(`⚠️ ${sent}명 처리, ${failed}명 전송 실패. 실패 항목을 다시 선택해 주세요.`, 'error');
+    }
+  }
+
+  // ── CSV 다운로드 ──
+  function csvCell(value) {
+    let text = String(value ?? '');
+    if (/^[=+\-@]/.test(text)) text = "'" + text;
+    return `"${text.replace(/"/g, '""')}"`;
+  }
+
+  function exportCsv() {
+    const rows = getFilteredRows();
+    if (rows.length === 0) {
+      showToast('다운로드할 신청 내역이 없습니다.', 'error');
+      return;
+    }
+
+    const headers = ['접수번호', '이름', '학번', '학년', '반', '사유', '이메일', '신청일시', '상태'];
+    const body = rows.map(r => [
+      r.rowNum, r.name, r.studentId, r.grade, r.classNum,
+      r.reason, r.email, r.timestamp, r.status
+    ].map(csvCell).join(','));
+    const csv = '\uFEFF' + [headers.map(csvCell).join(','), ...body].join('\r\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `학생증_재발급_신청_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    showToast(`✅ ${rows.length}건을 CSV로 저장했습니다.`, 'success');
   }
 
   // ── 완료 처리 ──
   async function markComplete(rowIndex, btn) {
-    if (!confirm('이 학생의 학생증 제작 완료로 처리하고 이메일을 발송하시겠습니까?')) return;
+    const target = allData.find(r => r.rowIndex === rowIndex);
+    const confirmed = await openConfirmModal({
+      title: '제작 완료 처리',
+      message: '선택한 신청자를 제작 완료 상태로 변경합니다.',
+      names: [target?.name || '선택한 신청자'],
+      submitText: '완료 처리 및 발송',
+    });
+    if (!confirmed) return;
 
     btn.disabled = true;
     btn.classList.add('loading-btn');
@@ -719,12 +1116,7 @@
 
     try {
       // no-cors 모드로 POST (Apps Script CORS 제한 우회)
-      await fetch(APPS_SCRIPT_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify({ action: 'complete', rowIndex }),
-        mode: 'no-cors',
-      });
+      await sendCompleteRequest(rowIndex);
 
       // 2초 후 시트 데이터 다시 불러와서 완료 여부 확인
       showToast('⏳ 처리 중... 잠시 기다려 주세요.', '');
@@ -756,6 +1148,31 @@
   function closePhoto() {
     document.getElementById('photoOverlay').classList.remove('show');
   }
+
+  // ── Confirmation Modal ──
+  let confirmResolver = null;
+
+  function openConfirmModal({ title, message, names, submitText }) {
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmMessage').textContent = message;
+    document.getElementById('confirmNames').textContent = names.join(' · ');
+    document.getElementById('confirmSubmit').textContent = submitText;
+    document.getElementById('confirmOverlay').classList.add('show');
+    document.getElementById('confirmSubmit').focus();
+    return new Promise(resolve => { confirmResolver = resolve; });
+  }
+
+  function resolveConfirm(confirmed) {
+    document.getElementById('confirmOverlay').classList.remove('show');
+    if (confirmResolver) confirmResolver(confirmed);
+    confirmResolver = null;
+  }
+
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && document.getElementById('confirmOverlay').classList.contains('show')) {
+      resolveConfirm(false);
+    }
+  });
 
   // ── Toast ──
   function showToast(msg, type = '') {
