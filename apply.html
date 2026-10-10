@@ -146,6 +146,20 @@
       color: var(--muted);
       font-size: 0.78rem;
       font-weight: 500;
+      position: relative;
+      transition: color 0.2s ease;
+    }
+
+    .progress-step:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      z-index: 0;
+      top: 11px;
+      left: 28px;
+      right: -10px;
+      height: 2px;
+      background: #ddd8ce;
+      transition: background 0.2s ease;
     }
 
     .progress-step::before {
@@ -160,10 +174,17 @@
       font-size: 0.7rem;
       font-weight: 700;
       flex-shrink: 0;
+      position: relative;
+      z-index: 1;
+      box-shadow: 0 0 0 4px var(--cream);
+      transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
     }
 
-    .progress-step.active { color: var(--navy); }
-    .progress-step.active::before { background: var(--navy); color: var(--gold-light); }
+    .progress-step.current { color: var(--navy); font-weight: 700; }
+    .progress-step.current::before { background: var(--navy); color: var(--gold-light); transform: scale(1.08); }
+    .progress-step.completed { color: #31734b; }
+    .progress-step.completed::before { content: '✓'; background: #31734b; color: #fff; }
+    .progress-step.completed::after { background: #86b49a; }
 
     .draft-notice, .error-summary {
       display: none;
@@ -307,9 +328,43 @@
       font-size: 0.82rem;
       color: #555;
       line-height: 1.8;
-      margin-bottom: 20px;
-      max-height: 120px;
+      max-height: 132px;
       overflow-y: auto;
+      scrollbar-color: var(--gold) #ece7dd;
+      scrollbar-width: thin;
+    }
+
+    .agree-scroll-wrap {
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .agree-scroll-wrap::after {
+      content: '';
+      position: absolute;
+      left: 1px;
+      right: 10px;
+      bottom: 25px;
+      height: 22px;
+      border-radius: 0 0 9px 9px;
+      background: linear-gradient(transparent, #f9f7f3);
+      pointer-events: none;
+    }
+
+    .scroll-hint {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 4px;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 0.72rem;
+    }
+
+    .scroll-hint::before {
+      content: '↓';
+      color: var(--gold);
+      font-weight: 700;
     }
 
     .agree-check {
@@ -549,10 +604,10 @@
     </p>
   </div>
 
-  <div class="progress-steps" aria-label="신청 단계">
-    <div class="progress-step active" data-step="1">기본 정보</div>
-    <div class="progress-step active" data-step="2">비용 및 동의</div>
-    <div class="progress-step" data-step="3">내용 확인</div>
+  <div class="progress-steps" aria-label="신청 단계" role="list">
+    <div class="progress-step current" data-step="1" role="listitem" aria-current="step">기본 정보</div>
+    <div class="progress-step" data-step="2" role="listitem">비용 및 동의</div>
+    <div class="progress-step" data-step="3" role="listitem">내용 확인</div>
   </div>
   <div class="draft-notice" id="draftNotice" role="status">이전에 작성하던 내용을 불러왔습니다. 개인정보 동의 항목은 다시 확인해 주세요.</div>
   <div class="error-summary" id="errorSummary" role="alert" tabindex="-1">입력 내용을 확인해 주세요. 첫 번째 오류 항목으로 이동합니다.</div>
@@ -651,12 +706,15 @@
         </label>
         <span class="err-msg" id="agreeCost-err" role="alert"></span>
 
-        <div class="agree-box">
-          민족사관고등학교는 학생증 재발급 업무를 위하여 아래와 같이 개인정보를 수집·이용합니다.<br><br>
-          <strong>수집 항목:</strong> 이름, 학번, 학년·반, 이메일, 신청 사유<br>
-          <strong>수집 목적:</strong> 학생증 제작 및 발급 완료 메일 발송<br>
-          <strong>보유 기간:</strong> 발급 완료 후 1년<br><br>
-          위의 개인정보 수집·이용에 대한 동의를 거부할 권리가 있습니다. 단, 동의 거부 시 학생증 재발급 서비스 이용이 어렵습니다.
+        <div class="agree-scroll-wrap">
+          <div class="agree-box" id="privacyTerms" tabindex="0" aria-describedby="privacyScrollHint">
+            민족사관고등학교는 학생증 재발급 업무를 위하여 아래와 같이 개인정보를 수집·이용합니다.<br><br>
+            <strong>수집 항목:</strong> 이름, 학번, 학년·반, 이메일, 신청 사유<br>
+            <strong>수집 목적:</strong> 학생증 제작 및 발급 완료 메일 발송<br>
+            <strong>보유 기간:</strong> 발급 완료 후 1년<br><br>
+            위의 개인정보 수집·이용에 대한 동의를 거부할 권리가 있습니다. 단, 동의 거부 시 학생증 재발급 서비스 이용이 어렵습니다.
+          </div>
+          <div class="scroll-hint" id="privacyScrollHint">스크롤하여 전체 내용 확인</div>
         </div>
 
         <label class="agree-check">
@@ -699,7 +757,7 @@
     <div class="modal-num" id="receiptNum">—</div>
     <button type="button" class="copy-btn" id="copyReceiptBtn">확인번호 복사</button>
     <div class="copy-status" id="copyStatus" role="status"></div>
-    <p>요청이 담당 시스템으로 전송되었습니다.<br>학생증 제작이 완료되면 <strong id="confirmedEmail"></strong>으로 이메일이 발송됩니다.<br><br>평균 처리 기간: <strong>2~3 영업일</strong></p>
+    <p>요청이 담당 시스템으로 전송되었습니다.<br>학생증 제작이 완료되면 <strong id="confirmedEmail"></strong>으로 이메일이 발송됩니다.<br><br>평균 처리 기간: <strong>2~3 영업일</strong><br>처리 상태 문의 시 담당 교직원에게 위 확인번호를 알려 주세요.</p>
     <button class="btn-close" onclick="location.reload()">확인</button>
   </div>
 </div>
@@ -808,6 +866,7 @@
       });
       document.getElementById('draftNotice').classList.add('show');
       updateReasonHelp();
+      updateProgressFromForm();
     } catch (error) { sessionStorage.removeItem(DRAFT_KEY); }
   }
 
@@ -816,6 +875,30 @@
     overlay.classList.toggle('show', show);
     overlay.setAttribute('aria-hidden', show ? 'false' : 'true');
     document.body.style.overflow = show ? 'hidden' : '';
+  }
+
+  function setProgressStep(currentStep) {
+    document.querySelectorAll('.progress-step').forEach(step => {
+      const number = Number(step.dataset.step);
+      const isCurrent = number === currentStep;
+      const isCompleted = number < currentStep;
+      const label = step.textContent.trim();
+      step.classList.toggle('current', isCurrent);
+      step.classList.toggle('completed', isCompleted);
+      if (isCurrent) step.setAttribute('aria-current', 'step');
+      else step.removeAttribute('aria-current');
+      step.setAttribute('aria-label', `${isCompleted ? '완료' : isCurrent ? '현재 단계' : '예정'}: ${label}`);
+    });
+  }
+
+  function updateProgressFromForm() {
+    const data = getFormData();
+    const emailConfirm = document.getElementById('emailConfirm').value.trim();
+    const basicComplete = Boolean(
+      data.name && /^\d{5}$/.test(data.studentId) && data.grade && data.classNum &&
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email) && emailConfirm === data.email && data.reason
+    );
+    setProgressStep(basicComplete ? 2 : 1);
   }
 
   function showReview() {
@@ -837,7 +920,7 @@
       list.appendChild(row);
     });
     lastFocusedElement = document.activeElement;
-    document.querySelector('.progress-step[data-step="3"]').classList.add('active');
+    setProgressStep(3);
     setOverlay('reviewOverlay', true);
     document.getElementById('editBtn').focus();
   }
@@ -857,6 +940,7 @@
   }
 
   function showError(message) {
+    updateProgressFromForm();
     document.getElementById('errorMsg').textContent = message;
     setOverlay('errorOverlay', true);
   }
@@ -868,7 +952,7 @@
 
   document.getElementById('editBtn').addEventListener('click', () => {
     setOverlay('reviewOverlay', false);
-    document.querySelector('.progress-step[data-step="3"]').classList.remove('active');
+    updateProgressFromForm();
     (lastFocusedElement || document.getElementById('name')).focus();
   });
 
@@ -913,6 +997,7 @@
       document.getElementById('receiptNum').textContent = requestId;
       document.getElementById('confirmedEmail').textContent = data.email;
       setOverlay('reviewOverlay', false);
+      setProgressStep(4);
       setOverlay('successOverlay', true);
       document.getElementById('copyReceiptBtn').focus();
     } catch (error) {
@@ -946,6 +1031,7 @@
       document.getElementById('errorSummary').classList.remove('show');
       if (!element.matches('[type="checkbox"]')) saveDraft();
       if (element.id === 'reason') updateReasonHelp();
+      updateProgressFromForm();
     });
   });
 
@@ -964,6 +1050,7 @@
     document.getElementById('agreeCost').checked = false;
     document.getElementById('agree').checked = false;
   });
+  setProgressStep(1);
   restoreDraft();
 </script>
 </body>
