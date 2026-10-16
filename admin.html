@@ -816,19 +816,39 @@
 <script>
   // ── 설정 ──
   const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxb5215g4KksTB__0SlLqftzShcBY3Nz-wMFRYToQ3wsCH4LElnDZ1fXzSpLeTVJW-8AQ/exec';
-  const ADMIN_PASSWORD  = 'minjok2024';   // ← 원하는 비밀번호로 변경
+  // 비밀번호는 코드에 두지 않고 서버(Apps Script 스크립트 속성)에서 확인한다.
+  let adminPassword = '';   // 로그인 성공 후 메모리에만 보관 (새로고침하면 사라짐)
 
   // ── 로그인 ──
-  function doLogin() {
+  async function doLogin() {
     const pw = document.getElementById('pwInput').value;
-    if (pw === ADMIN_PASSWORD) {
+    const errEl = document.getElementById('loginErr');
+    errEl.textContent = '';
+    if (!pw) return;
+    try {
+      const json = await requestList(pw);
+      if (!json.success) {
+        errEl.textContent = json.error || '비밀번호가 올바르지 않습니다.';
+        return;
+      }
+      adminPassword = pw;
+      document.getElementById('pwInput').value = '';
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('app').classList.add('show');
-      loadData();
+      applyData(json);
       setInterval(loadData, 60000); // 1분마다 자동 갱신
-    } else {
-      document.getElementById('loginErr').textContent = '비밀번호가 올바르지 않습니다.';
+    } catch (e) {
+      errEl.textContent = '서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.';
     }
+  }
+
+  async function requestList(password) {
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'list', password }),
+    });
+    return res.json();
   }
 
   function logout() {
@@ -836,28 +856,41 @@
   }
 
   // ── 데이터 ──
+  function esc(value) {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
   let allData = [];
   const selectedRows = new Set();
   let isBulkProcessing = false;
 
   async function loadData() {
     try {
-      const res = await fetch(`${APPS_SCRIPT_URL}?action=list&t=${Date.now()}`);
-      const json = await res.json();
-      allData = json.data || [];
-      const pendingIndexes = new Set(
-        allData.filter(r => r.status !== '완료').map(r => String(r.rowIndex))
-      );
-      [...selectedRows].forEach(rowIndex => {
-        if (!pendingIndexes.has(rowIndex)) selectedRows.delete(rowIndex);
-      });
-      updateStats();
-      renderTable();
-      document.getElementById('lastRefresh').textContent =
-        '마지막 갱신: ' + new Date().toLocaleTimeString('ko-KR');
+      const json = await requestList(adminPassword);
+      if (!json.success) {
+        showToast(json.error || '데이터를 불러오지 못했습니다.', 'error');
+        return;
+      }
+      applyData(json);
     } catch (e) {
       showToast('데이터를 불러오지 못했습니다.', 'error');
     }
+  }
+
+  function applyData(json) {
+    allData = json.data || [];
+    const pendingIndexes = new Set(
+      allData.filter(r => r.status !== '완료').map(r => String(r.rowIndex))
+    );
+    [...selectedRows].forEach(rowIndex => {
+      if (!pendingIndexes.has(rowIndex)) selectedRows.delete(rowIndex);
+    });
+    updateStats();
+    renderTable();
+    document.getElementById('lastRefresh').textContent =
+      '마지막 갱신: ' + new Date().toLocaleTimeString('ko-KR');
   }
 
   function updateStats() {
@@ -910,23 +943,24 @@
       const isDone = r.status === '완료';
       const isSelected = selectedRows.has(String(r.rowIndex));
       const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(r.email || '').trim());
-      const photoCell = r.photo
-        ? `<img src="${r.photo}" class="photo-thumb" onclick="openPhoto('${r.photo}')" title="사진 보기" />`
+      const safePhoto = /^(data:image\/|https:\/\/)/i.test(String(r.photo || '')) ? esc(r.photo) : '';
+      const photoCell = safePhoto
+        ? `<img src="${safePhoto}" class="photo-thumb" data-photo="${safePhoto}" onclick="openPhoto(this.dataset.photo)" title="사진 보기" />`
         : `<div class="no-photo" title="사진 없음">▧</div>`;
 
       return `
         <tr class="${isSelected ? 'selected' : ''}">
           <td class="check-cell" data-label="선택">
-            ${isDone ? '' : `<input type="checkbox" class="row-check" value="${r.rowIndex}" aria-label="${r.name || '신청자'} 선택" ${isSelected ? 'checked' : ''} onchange="toggleRowSelection(this)" />`}
+            ${isDone ? '' : `<input type="checkbox" class="row-check" value="${r.rowIndex}" aria-label="${esc(r.name || '신청자')} 선택" ${isSelected ? 'checked' : ''} onchange="toggleRowSelection(this)" />`}
           </td>
-          <td class="mono" data-label="접수번호">${r.rowNum || (i+1)}</td>
-          <td data-label="이름"><strong>${r.name || ''}</strong></td>
-          <td class="mono" data-label="학번">${r.studentId || ''}</td>
-          <td data-label="학년/반">${r.grade || ''}학년 ${r.classNum || ''}반</td>
-          <td data-label="사유"><span style="font-size:0.8rem">${r.reason || ''}</span></td>
-          <td data-label="이메일" class="mono ${isEmailValid ? '' : 'email-invalid'}" style="font-size:0.8rem" title="${isEmailValid ? '' : '이메일 형식을 확인해 주세요'}">${r.email || '이메일 없음'}</td>
+          <td class="mono" data-label="접수번호">${esc(r.rowNum || (i+1))}</td>
+          <td data-label="이름"><strong>${esc(r.name || '')}</strong></td>
+          <td class="mono" data-label="학번">${esc(r.studentId || '')}</td>
+          <td data-label="학년/반">${esc(r.grade || '')}학년 ${esc(r.classNum || '')}반</td>
+          <td data-label="사유"><span style="font-size:0.8rem">${esc(r.reason || '')}</span></td>
+          <td data-label="이메일" class="mono ${isEmailValid ? '' : 'email-invalid'}" style="font-size:0.8rem" title="${isEmailValid ? '' : '이메일 형식을 확인해 주세요'}">${esc(r.email || '이메일 없음')}</td>
           <td data-label="사진">${photoCell}</td>
-          <td data-label="신청일시" style="font-size:0.78rem;color:var(--muted);white-space:nowrap">${r.timestamp || ''}</td>
+          <td data-label="신청일시" style="font-size:0.78rem;color:var(--muted);white-space:nowrap">${esc(r.timestamp || '')}</td>
           <td data-label="상태">
             <span class="badge ${isDone ? 'done' : 'pending'}">
               ${isDone ? '✅ 완료' : '⏳ 대기'}
@@ -1010,7 +1044,7 @@
     await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ action: 'complete', rowIndex: Number(rowIndex) }),
+      body: JSON.stringify({ action: 'complete', rowIndex: Number(rowIndex), password: adminPassword }),
       mode: 'no-cors',
     });
   }
